@@ -35,7 +35,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def create_user(db: Session, user: UserCreate):
     # create a new user
     hashed_password = get_paswword_hash(user.password)
-    db_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
+    db_user = User(username=user.username, email=user.email, password_hash=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -50,7 +50,7 @@ def update_user(db: Session, user_id: int, user: UserUpdate):
 
         for key, value in update_data.items():
             if key == "password":
-                setattr(db_user, "hashed_password", get_paswword_hash(value))
+                setattr(db_user, "password_hash", get_paswword_hash(value))
             else:
                 setattr(db_user, key, value)
 

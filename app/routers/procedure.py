@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HttpException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -23,7 +23,7 @@ def read_procedures(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
 def read_procedure(procedure_id: int, db: Session = Depends(get_db)):
     procedure = crud.get_procedure(db, procedure_id=procedure_id)
     if not procedure:
-        raise HttpException(status_code=404, detail="Procedure not found")
+        raise HTTPException(status_code=404, detail="Procedure not found")
     return procedure
 
 
@@ -32,7 +32,7 @@ def read_procedure(procedure_id: int, db: Session = Depends(get_db)):
 def create_procedure(procedure: ProcedureCreate, db: Session = Depends(get_db)):
     db_procedure = crud.get_procedure_by_cpt_code(db, cpt_code=procedure.cpt_code)
     if db_procedure:
-        raise HttpException(status_code=400, detail="Procedure with this CPT code already exists")
+        raise HTTPException(status_code=400, detail="Procedure with this CPT code already exists")
     return crud.create_procedure(db, procedure=procedure)
 
 # update existing procedure
@@ -40,13 +40,13 @@ def create_procedure(procedure: ProcedureCreate, db: Session = Depends(get_db)):
 def update_procedure(procedure_id: int, procedure: ProcedureUpdate, db: Session = Depends(get_db)):
     db_procedure = crud.get_procedure(db, procedure_id=procedure_id)
     if db_procedure is None:
-        raise HttpException(status_code=404, detail="Procedure not found")
-    return db_procedure
+        raise HTTPException(status_code=404, detail="Procedure not found")
+    return db_procedure 
 
 # delete a procedure
 @router.delete("/{procedure_id}", response_model=Procedure)
 def delete_procedure(procedure_id: int, db: Session = Depends(get_db)):
     db_procedure = crud.delete_procedure(db, procedure_id=procedure_id)
     if db_procedure is None:
-        raise HttpException(status_code=404, detail="Procedure not found")
+        raise HTTPException(status_code=404, detail="Procedure not found")
     return db_procedure

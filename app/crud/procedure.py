@@ -20,7 +20,7 @@ def get_procedure_by_cpt_code(db: Session, cpt_code: str):
 
 
 
-def get_procedure(db: Session, procedure: ProcedureCreate):
+def create_procedure(db: Session, procedure: ProcedureCreate):
     # create a new procedure
     db_procedure = Procedure(**procedure.model_dump())
     db.add(db_procedure)
