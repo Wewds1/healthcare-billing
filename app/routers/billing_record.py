@@ -40,7 +40,6 @@ def create_billing_record(record: BillingRecordCreate, db: Session = Depends(get
 #update billing record by id
 @router.put("/{record_id}", response_model=BillingRecord)
 def update_billing_record(record_id: int, record: BillingRecordUpdate, db: Session = Depends(get_db)):
-    # Missing implementation!
     db_record = crud.update_billing_record(db, billing_record_id=record_id, billing_record=record)
     if db_record is None:
         raise HTTPException(status_code=404, detail="Billing record not found")
