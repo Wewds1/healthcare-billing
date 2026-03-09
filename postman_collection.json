@@ -1,0 +1,142 @@
+{
+  "info": {
+    "name": "Healthcare Billing API",
+    "description": "Complete API collection for testing healthcare billing system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"role\": \"user\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {"raw": "http://localhost:8000/users/", "host": ["localhost"], "port": "8000", "path": ["users", ""]}
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/users/", "host": ["localhost"], "port": "8000", "path": ["users", ""]}
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/users/1", "host": ["localhost"], "port": "8000", "path": ["users", "1"]}
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"role\": \"admin\"\n}"},
+            "url": {"raw": "http://localhost:8000/users/1", "host": ["localhost"], "port": "8000", "path": ["users", "1"]}
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": {"raw": "http://localhost:8000/users/1", "host": ["localhost"], "port": "8000", "path": ["users", "1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "item": [
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Alice\",\n  \"last_name\": \"Cooper\",\n  \"date_of_birth\": \"1990-01-15\",\n  \"insurance_provider\": \"Blue Cross\"\n}"
+            },
+            "url": {"raw": "http://localhost:8000/patients/", "host": ["localhost"], "port": "8000", "path": ["patients", ""]}
+          }
+        },
+        {
+          "name": "Get All Patients",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/patients/", "host": ["localhost"], "port": "8000", "path": ["patients", ""]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Procedures",
+      "item": [
+        {
+          "name": "Create Procedure",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpt_code\": \"99215\",\n  \"description\": \"Office Visit - Complex\",\n  \"price\": 250\n}"
+            },
+            "url": {"raw": "http://localhost:8000/procedures/", "host": ["localhost"], "port": "8000", "path": ["procedures", ""]}
+          }
+        },
+        {
+          "name": "Get All Procedures",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/procedures/", "host": ["localhost"], "port": "8000", "path": ["procedures", ""]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Billing Records",
+      "item": [
+        {
+          "name": "Create Billing Record",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"procedure_id\": 1,\n  \"amount\": 150.00,\n  \"status\": \"pending\"\n}"
+            },
+            "url": {"raw": "http://localhost:8000/billing/", "host": ["localhost"], "port": "8000", "path": ["billing", ""]}
+          }
+        },
+        {
+          "name": "Get All Billing Records",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/billing/", "host": ["localhost"], "port": "8000", "path": ["billing", ""]}
+          }
+        },
+        {
+          "name": "Get Billing by Patient",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/billing/patient/1", "host": ["localhost"], "port": "8000", "path": ["billing", "patient", "1"]}
+          }
+        },
+        {
+          "name": "Get Billing by Status",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/billing/status/pending", "host": ["localhost"], "port": "8000", "path": ["billing", "status", "pending"]}
+          }
+        }
+      ]
+    }
+  ]
+}

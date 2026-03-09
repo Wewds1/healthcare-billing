@@ -185,12 +185,12 @@ app.include_router(billing_record.router)
 
 ## Important Notes
 
-✅ **Use Docker** for professional environment → ensures consistency, avoids "works on my machine" problems.
+**Use Docker** for professional environment → ensures consistency, avoids "works on my machine" problems.
 
-✅ **Alembic** for database migrations → version control for schema.
+**Alembic** for database migrations → version control for schema.
 
-✅ **Pydantic schemas** → validate input, prevent errors.
+**Pydantic schemas** → validate input, prevent errors.
 
-✅ **CRUD module separation** → clean code, easy to maintain.
+*CRUD module separation** → clean code, easy to maintain.
 
-✅ **`.env` file** → never hardcode secrets.
+**`.env` file** → never hardcode secrets.

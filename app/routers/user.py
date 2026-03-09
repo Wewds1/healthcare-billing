@@ -6,6 +6,7 @@ from typing import List
 from app.core.dependencies import get_db
 from app.schemas.user import User, UserCreate, UserUpdate
 from app.crud import user as crud
+# from app.routers.auth import require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
 

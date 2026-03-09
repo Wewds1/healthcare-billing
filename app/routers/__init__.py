@@ -1,1 +1,1 @@
-from . import user, patient, procedure, billing_record
+from . import user, patient, procedure, billing_record, auth
