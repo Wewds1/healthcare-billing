@@ -1,4 +1,4 @@
-# 🏥 Healthcare Billing AI System — Portfolio Upgrade Roadmap
+# Healthcare Billing AI System — Portfolio Upgrade Roadmap
 
 > **Target:** ML/AI Engineer Portfolio Project  
 > **Timeline:** 7 Days (Full Sprint — 8+ hrs/day)  
@@ -8,7 +8,7 @@
 
 ---
 
-## 🎯 What Recruiters Will See (Priority Order)
+## What Recruiters Will See (Priority Order)
 
 | # | Feature | Signal to Recruiter |
 |---|---------|-------------------|
@@ -19,7 +19,7 @@
 
 ---
 
-## 🗂️ New Project Structure (After Upgrade)
+## New Project Structure (After Upgrade)
 
 ```
 healthcare-billing/
@@ -103,7 +103,7 @@ healthcare-billing/
 
 ---
 
-## 📅 7-Day Sprint Plan
+## 7-Day Sprint Plan
 
 ---
 
@@ -152,10 +152,10 @@ Build `ml/data/generate_synthetic.py` that produces a realistic CSV dataset (~5,
 - Inject ~8% anomaly rate
 
 #### Day 1 Deliverables
-- ✅ Clean, role-guarded FastAPI backend
-- ✅ Streamlit running inside Docker
-- ✅ `synthetic_billing.csv` with ~5,000 records
-- ✅ All new DB fields migrated
+- Clean, role-guarded FastAPI backend
+- Streamlit running inside Docker
+- `synthetic_billing.csv` with ~5,000 records
+- All new DB fields migrated
 
 ---
 
@@ -213,10 +213,10 @@ POST /ml/predict/batch
 - "What-if" sliders: change insurance type or diagnosis, see probability shift live
 
 #### Day 2 Deliverables
-- ✅ Trained model with documented metrics (AUC ≥ 0.80)
-- ✅ `/ml/predict/denial` endpoint live
-- ✅ Streamlit prediction page with risk gauge
-- ✅ Feature importance chart
+-  Trained model with documented metrics (AUC ≥ 0.80)
+-  `/ml/predict/denial` endpoint live
+-  Streamlit prediction page with risk gauge
+-  Feature importance chart
 
 ---
 
@@ -264,10 +264,10 @@ GET  /ml/anomalies/{record_id}        — Anomaly details for a record
 - Revenue at risk metric: total billed amount of flagged records
 
 #### Day 3 Deliverables
-- ✅ Isolation Forest model trained and serialized
-- ✅ Auto-scan on every new billing record
-- ✅ Flagged records dashboard
-- ✅ Revenue-at-risk metric visible
+-  Isolation Forest model trained and serialized
+-  Auto-scan on every new billing record
+- Flagged records dashboard
+-  Revenue-at-risk metric visible
 
 ---
 
@@ -360,11 +360,11 @@ POST /ocr/upload-and-create
 - "Save to Billing Record" button
 
 #### Day 4 Deliverables
-- ✅ Full OpenCV preprocessing pipeline (deskew, denoise, binarize)
-- ✅ Tesseract extraction with per-document configs
-- ✅ Field parser for all 4 document types
-- ✅ OCR Streamlit page with before/after image comparison
-- ✅ Auto-populate billing record from OCR output
+-  Full OpenCV preprocessing pipeline (deskew, denoise, binarize)
+-  Tesseract extraction with per-document configs
+-  Field parser for all 4 document types
+-  OCR Streamlit page with before/after image comparison
+-  Auto-populate billing record from OCR output
 
 ---
 
@@ -428,10 +428,10 @@ Bot: [calls get_flagged_records] → "Found 4 anomalous records: [details]..."
 ```
 
 #### Day 5 Deliverables
-- ✅ Ollama running in Docker (add to docker-compose)
-- ✅ 5 DB-connected tools implemented
-- ✅ ReAct agent with conversation memory
-- ✅ Streamlit chatbot UI with reasoning transparency
+- Ollama running in Docker (add to docker-compose)
+- 5 DB-connected tools implemented
+- ReAct agent with conversation memory
+- Streamlit chatbot UI with reasoning transparency
 
 ---
 
@@ -497,10 +497,10 @@ File: `.github/workflows/ci.yml`:
 ```
 
 #### Day 6 Deliverables
-- ✅ 5 interactive Plotly charts in analytics dashboard
-- ✅ KPI cards at top of analytics page
-- ✅ 15+ tests covering API, ML, and OCR
-- ✅ GitHub Actions CI pipeline
+- 5 interactive Plotly charts in analytics dashboard
+- KPI cards at top of analytics page
+-  15+ tests covering API, ML, and OCR
+-  GitHub Actions CI pipeline
 
 ---
 
@@ -584,14 +584,14 @@ File: `README.md` — this is a recruiter's first impression.
 - [ ] Verify all Docker services start cleanly with `docker compose up`
 
 #### Day 7 Deliverables
-- ✅ Live URL on Render
-- ✅ Portfolio-grade README with screenshots/metrics
-- ✅ All Docker services cleanly orchestrated
-- ✅ Demo video recorded
+-  Live URL on Render
+- Portfolio-grade README with screenshots/metrics
+-  All Docker services cleanly orchestrated
+- Demo video recorded
 
 ---
 
-## 🧰 Full Technology Stack (After Upgrade)
+##  Full Technology Stack (After Upgrade)
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -615,7 +615,7 @@ File: `README.md` — this is a recruiter's first impression.
 
 ---
 
-## 📦 Updated requirements.txt
+##  Updated requirements.txt
 
 ```
 # Existing
@@ -661,7 +661,7 @@ aiofiles==23.2.1
 
 ---
 
-## 🤔 Key Technical Decisions Explained
+##  Key Technical Decisions Explained
 
 ### Why Gradient Boosting over Neural Networks for Denial Prediction?
 With ~5,000 synthetic records, a neural network would overfit. GradientBoosting (or XGBoost) achieves better AUC on tabular data at this scale, trains in seconds, and produces easily interpretable feature importances — exactly what a billing team needs to act on predictions.
@@ -677,7 +677,7 @@ Separation of concerns: the API and dashboard can scale independently and be dep
 
 ---
 
-## 📊 Expected ML Metrics (Realistic Targets)
+##  Expected ML Metrics (Realistic Targets)
 
 | Model | Metric | Expected Range | Notes |
 |-------|--------|---------------|-------|
@@ -691,7 +691,7 @@ Separation of concerns: the API and dashboard can scale independently and be dep
 
 ---
 
-## ⚠️ Risks & Mitigations
+## Risks & Mitigations
 
 | Risk | Mitigation |
 |------|-----------|
@@ -703,7 +703,7 @@ Separation of concerns: the API and dashboard can scale independently and be dep
 
 ---
 
-## 🚀 After This Week — What to Add Next
+##  After This Week — What to Add Next
 
 These are intentionally left out to keep the 1-week scope realistic, but mentioning them in your README shows product thinking:
 
@@ -717,7 +717,7 @@ These are intentionally left out to keep the 1-week scope realistic, but mention
 
 ---
 
-## ✅ Definition of Done
+## Definition of Done
 
 The project is portfolio-ready when:
 
