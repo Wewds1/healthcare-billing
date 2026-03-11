@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import user, patient, procedure, billing_record, auth  
+from app.routers import user, patient, procedure, billing_record, auth
+import os
 
 app = FastAPI(
     title="Healthcare Billing System",
@@ -9,10 +10,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Environment-based CORS (more secure)
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", 
+    "http://localhost:8501,http://localhost:3000"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -10,3 +10,6 @@ class Patient(Base):
     last_name = Column(String)
     date_of_birth = Column(String)
     insurance_provider = Column(String)
+    insurance_type = Column(String)
+    email = Column(String, unique=True, index=True)
+    phone = Column(String)

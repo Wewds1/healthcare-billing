@@ -7,7 +7,9 @@ class PatientBase(BaseModel):
     last_name: str
     date_of_birth: str
     insurance_provider: str
-
+    insurance_type : str
+    email : Optional[str] = None
+    phone : Optional[str] = None
 
 class PatientCreate(PatientBase):
     pass
@@ -18,6 +20,9 @@ class PatientUpdate(BaseModel):
     last_name: Optional[str] = None
     date_of_birth: Optional[str] = None
     insurance_provider: Optional[str] = None
+    insurance_type: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class Patient(PatientBase):

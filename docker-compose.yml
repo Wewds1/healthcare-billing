@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retrries: 5
 
   api:
     build: .
@@ -24,6 +29,25 @@ services:
       - .env
     volumes:
       - .:/app
-
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: billing_streamlit
+    restart: always
+    depends_on:
+      -api
+    environment:
+      -API_URL=http://api:8000
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
 volumes:
   postgres_data:

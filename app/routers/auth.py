@@ -27,6 +27,10 @@ class TokenResponse(BaseModel):
 def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate user and return JWT token
+    
+    Test credentials from seed data:
+    - username: admin, password: adminadmin
+    - username: doctor1, password: Doctor123!
     """
     # Get user by username
     user = user_crud.get_user_by_username(db, username=login_data.username)
