@@ -15,14 +15,15 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
-      retrries: 5
+      retries: 5
 
   api:
     build: .
     container_name: billing_api
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     env_file:
@@ -34,7 +35,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      
+
   streamlit:
     build:
       context: .
@@ -42,12 +43,13 @@ services:
     container_name: billing_streamlit
     restart: always
     depends_on:
-      -api
-    environment:
-      -API_URL=http://api:8000
+      - api
     ports:
       - "8501:8501"
+    environment:
+      - API_URL=http://api:8000
     volumes:
       - .:/app
+
 volumes:
   postgres_data:

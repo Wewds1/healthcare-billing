@@ -2,9 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
+import os
 
 # Configuration
-API_URL = "http://localhost:8000"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 # Session state for authentication
 if 'token' not in st.session_state:
@@ -165,7 +166,7 @@ with st.sidebar:
     if st.session_state.token:
         st.write("**Logged in as:**")
         st.code(st.session_state.user['username'])
-        st.write(f"**Role:** {st.session_state.user['role'].title()}")
+        st.write(f"**Role:** {st.session_state.user['role']}")
         st.markdown("---")
         if st.button("Logout", use_container_width=True):
             logout()
@@ -563,4 +564,4 @@ else:
 
 # Footer
 st.markdown("---")
-st.caption("Healthcare Billing System | FastAPI + PostgreSQL + Streamlit")
+st.caption("Healthcare Billing System | Allen Borja")
