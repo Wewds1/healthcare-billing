@@ -1,0 +1,22 @@
+{
+    "model_type": "Logistic Regression",
+    "training_date": "2026-03-12 16:35:39",
+    "dataset_size": 5000,
+    "train_size": 4000,
+    "test_size": 1000,
+    "numeric_features": 41,
+    "metrics": {
+        "accuracy": 0.666,
+        "precision": 0.5915492957746479,
+        "recall": 0.23333333333333334,
+        "f1_score": 0.3346613545816733,
+        "roc_auc": 0.5713541666666667
+    },
+    "top_features": [
+        "insurance_type_Private",
+        "insurance_type_Self-pay",
+        "prior_denial_rate",
+        "procedure_cpt_code_99284",
+        "procedure_cpt_code_99285"
+    ]
+}
