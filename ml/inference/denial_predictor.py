@@ -140,13 +140,12 @@ class DenialPredictor:
             
     
     def get_model_info(self) -> Dict:
-        """ Return Model metadata and info including metrics and dataset infos"""
-        return{
+        return {
             'model_type': self.metadata.get('model_type', 'Unknown'),
             'training_date': self.metadata.get('training_date', 'Unknown'),
-            'training_data_size': self.metadata.get('dataset_size', 'Unknown'),
-            'num_features': self.metadata.get('numeric_features', 'Unknown'),
-            'metrics': self.metadata['metrics'],
+            'training_data_size': self.metadata.get('dataset_size', 0),
+            'num_features': self.metadata.get('numeric_features', 0),
+            'metrics': self.metadata.get('metrics', {}),
             'top_features': self.metadata.get('top_features', [])
         }
     

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict, Optional
-from pydantic import BaseModel, Basemodel, Field
+from pydantic import BaseModel, Field
 
 
 from app.core.dependencies import get_db
-from app.core.rbac import require_role
+from app.core.rbac import require_role, require_user
 from ml.inference.denial_predictor import get_predictor, DenialPredictor
 
 
@@ -63,8 +63,8 @@ class FeatureImportance(BaseModel):
     
 class ModelInfo(BaseModel):
     model_type: str
-    training_data: str
-    dataset_size: int
+    training_date: str # double check if this match on denial_predictor.py
+    training_data_size: int
     num_features: int
     metrics: Dict
     top_features: List[str]
@@ -73,7 +73,7 @@ class ModelInfo(BaseModel):
     
     
 @router.post("/predict/denial", response_model=PredictionOutput, status_code=200)
-async def predict_denial(input_data: PredictionInput, current_user = Depends(require_role)):
+async def predict_denial(input_data: PredictionInput, current_user = Depends(require_user)):
     """ Predict claim probability for single claim
     
         requires admin 
@@ -95,7 +95,7 @@ async def predict_denial(input_data: PredictionInput, current_user = Depends(req
 
 
 @router.post("/predict/denial/batch", response_model=BatchPredictionOutput, status_code=200)
-async def batch_predict_denial(batch_input: BatchPredictionInput, current_user = Depends(require_role)):
+async def batch_predict_denial(batch_input: BatchPredictionInput, current_user = Depends(require_user)):
     """ Predict claim probability for batch of claims
     
         requires admin 
@@ -134,20 +134,19 @@ async def batch_predict_denial(batch_input: BatchPredictionInput, current_user =
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 @router.get("/model/info", response_model=ModelInfo, status_code=200)
-async def get_model_info(current_user = Depends(require_role)):
+async def get_model_info(current_user = Depends(require_user)):
     # ill probably dont need this but well lets just add can be refactored later on
     try:
-       predictor = get_predictor()
-       model_info = predictor.get_model_info()
-       return model_info
-       
-       
+        predictor = get_predictor()
+        model_info = predictor.get_model_info()
+        return model_info
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
     
 @router.get("/model/feature-importance", response_model=List[FeatureImportance], status_code=200)
-async def get_feature_importance(current_user = Depends(require_role)):
+async def get_feature_importance(current_user = Depends(require_user)):
     
     try:
         predictor = get_predictor()
@@ -178,3 +177,5 @@ async def ml_health_check():
             "error": str(e),
             "message": "ML model failed to load"
         }
+        
+
