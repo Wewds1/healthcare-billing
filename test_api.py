@@ -50,3 +50,6 @@ pred_response.raise_for_status()
 result = pred_response.json()
 print(f"Risk Level: {result['risk_level']}")
 print(f"Denial Probability: {result['denial_probability']:.1%}")
+
+
+print("Goodjob making it this far!")
