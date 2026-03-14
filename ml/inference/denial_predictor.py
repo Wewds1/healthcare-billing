@@ -15,6 +15,9 @@ class DenialPredictor:
         self.feature_names = None
         self.metadata = None
         self._load_model()
+        
+        if self.metadata.get("model_type") == "Logistic Regression" and not hasattr(self.model, "multi_class"):
+            self.model.multi_class = "auto"
     
     #Load model, scaler, feature names, and metadata
     def _load_model(self):
