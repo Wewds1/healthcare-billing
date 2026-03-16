@@ -1,6 +1,6 @@
 {
     "model_type": "Logistic Regression",
-    "training_date": "2026-03-14 23:04:44",
+    "training_date": "2026-03-16 12:48:48",
     "dataset_size": 5000,
     "train_size": 4000,
     "test_size": 1000,
@@ -10,7 +10,7 @@
         "precision": 0.5915492957746479,
         "recall": 0.23333333333333334,
         "f1_score": 0.3346613545816733,
-        "roc_auc": 0.5713541666666667
+        "roc_auc": 0.6364279513888887
     },
     "top_features": [
         "insurance_type_Private",
