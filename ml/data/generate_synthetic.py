@@ -74,95 +74,108 @@ VALID_PAIRS = {
 }
 
 
-def generate_patient_claims(num_records=5000):
+def generate_patient_claims(num_records=20000):
     records = []
-    num_patients = num_records // 3
 
+    # Sequential IDs avoid accidental overwrite/reset of patient history.
+    next_patient_id = 1
     patient_history = {}
 
-    for record_id in range(num_records):
-        if random.random() < 0.7 and patient_history:
+    high_cost_cpts = {"99284", "99285", "70450"}
+    medicaid_high_cost_penalty = 0.20
+
+    for _ in range(num_records):
+        # Reuse existing patient most of the time to create longitudinal patterns.
+        if random.random() < 0.75 and patient_history:
             patient_id = random.choice(list(patient_history.keys()))
         else:
-            patient_id = random.randint(1, num_patients)
+            patient_id = next_patient_id
+            next_patient_id += 1
             patient_history[patient_id] = {
-                "age": random.randint(0, 100),
+                "age": random.randint(18, 90),  # adult-focused billing population
                 "insurance": random.choice(INSURANCE_TYPES),
                 "claims": [],
-                "denial_count": 0
+                "denial_count": 0,
             }
+
         patient = patient_history[patient_id]
-
-
         diagnosis_code = random.choice(ICD10_CODES)
 
-
-        if random.random() < 0.8:
+        # 85% compatible CPT pick -> still realistic but less random mismatch.
+        if random.random() < 0.85:
             procedure_cpt = random.choice(VALID_PAIRS.get(diagnosis_code, CPT_CODES[:5]))
         else:
             procedure_cpt = random.choice(CPT_CODES)
 
-
         price_range = CPT_PRICE_RANGES.get(procedure_cpt, (50, 200))
         base_amount = random.uniform(*price_range)
-        billed_amount = round(base_amount * random.uniform(0.9, 1.1), 2)
+        billed_amount = round(base_amount * random.uniform(0.90, 1.10), 2)
 
-        days_since_last_claim = 999
-        if patient['claims']:
-            last_claim_date = patient['claims'][-1]['date']
+        if patient["claims"]:
+            last_claim_date = patient["claims"][-1]["date"]
             current_date = last_claim_date + timedelta(days=random.randint(1, 180))
             days_since_last_claim = (current_date - last_claim_date).days
         else:
             current_date = datetime.now() - timedelta(days=random.randint(0, 365))
+            days_since_last_claim = 999
 
-
-        num_prior_claims = len(patient['claims'])
+        num_prior_claims = len(patient["claims"])
         prior_denial_rate = patient["denial_count"] / max(num_prior_claims, 1)
-        denial_prob = 0.15
 
-        if patient['insurance'] == "Self-pay":
-            denial_prob += 0.25
-        elif patient['insurance'] == "Medicaid":
-            denial_prob += 0.1
-        elif patient['insurance'] == "Medicare":
+        # Engineered rule flags (high-signal interpretable features).
+        is_code_mismatch = 1 if procedure_cpt not in VALID_PAIRS.get(diagnosis_code, []) else 0
+        is_high_cost_procedure = 1 if procedure_cpt in high_cost_cpts else 0
+        is_frequent_claimer = 1 if (num_prior_claims > 3 and days_since_last_claim < 30) else 0
+        is_recent_repeat_claim = 1 if days_since_last_claim < 7 else 0
+
+        # Start with low baseline; then add stronger risk interactions.
+        denial_prob = 0.10
+
+        if patient["insurance"] == "Self-pay":
+            denial_prob += 0.30
+        elif patient["insurance"] == "Medicaid":
+            denial_prob += 0.10
+        elif patient["insurance"] == "Medicare":
             denial_prob += 0.05
 
-        if billed_amount > 500:
-            denial_prob += 0.1
+        if patient["insurance"] == "Medicaid" and is_high_cost_procedure:
+            denial_prob += medicaid_high_cost_penalty
 
-        if num_prior_claims > 3 and days_since_last_claim < 30:
-            denial_prob += 0.15
+        if is_code_mismatch:
+            denial_prob += 0.35
 
-        if procedure_cpt not in VALID_PAIRS.get(diagnosis_code, []):
+        if is_frequent_claimer:
             denial_prob += 0.25
 
         if prior_denial_rate > 0.5:
-            denial_prob += 0.2
-        
-        if random.random() < 0.12:
-            denial_prob = random.uniform(0, 1)
+            denial_prob += 0.25
+        elif prior_denial_rate > 0.3:
+            denial_prob += 0.12
 
+        # Mild continuous effect from amount (not just one hard threshold).
+        pct_in_range = (billed_amount - price_range[0]) / max(price_range[1] - price_range[0], 1)
+        denial_prob += max(0.0, pct_in_range) * 0.08
+
+        # Controlled noise: enough realism, not enough to kill separability.
+        if random.random() < 0.04:
+            denial_prob += random.uniform(-0.20, 0.20)
+
+        denial_prob = float(np.clip(denial_prob, 0.01, 0.95))
         claim_status = 1 if random.random() < denial_prob else 0
 
+        # Keep anomaly logic independent of denial target.
         anomaly_label = 0
-
-
-        median_price = sum(price_range) / 2
+        median_price = sum(price_range) / 2.0
         if billed_amount > median_price * 3:
             anomaly_label = 1
-        
-        if days_since_last_claim < 7:
+        if is_recent_repeat_claim:
             anomaly_label = 1
-        
         if billed_amount == 0 or billed_amount > 50000:
             anomaly_label = 1
-        
         if num_prior_claims > 10 and days_since_last_claim < 14:
             anomaly_label = 1
-        
         if random.random() < 0.08 and anomaly_label == 0:
             anomaly_label = 1
-        
 
         record = {
             "patient_id": patient_id,
@@ -174,30 +187,31 @@ def generate_patient_claims(num_records=5000):
             "days_since_last_claim": days_since_last_claim,
             "num_prior_claims": num_prior_claims,
             "prior_denial_rate": round(prior_denial_rate, 3),
+            # engineered explanatory features
+            "is_code_mismatch": is_code_mismatch,
+            "is_high_cost_procedure": is_high_cost_procedure,
+            "is_frequent_claimer": is_frequent_claimer,
+            "is_recent_repeat_claim": is_recent_repeat_claim,
             "claim_status": claim_status,
             "anomaly_label": anomaly_label,
             "date": current_date.strftime("%Y-%m-%d"),
         }
 
         records.append(record)
-        
         patient["claims"].append({"date": current_date})
         if claim_status == 1:
             patient["denial_count"] += 1
-    
-    return pd.DataFrame(records)
 
+    return pd.DataFrame(records)
 
 
 def main():
     print("Generating synthetic patient claims data...")
-
-    df = generate_patient_claims(num_records=5000)
-
+    df = generate_patient_claims(num_records=20000)
     output_path = "ml/data/synthetic_billing.csv"
     df.to_csv(output_path, index=False)
     print(f"\nSaved to: {output_path}")
-
+    print(f"Rows: {len(df)} | Denial rate: {df['claim_status'].mean():.2%}")
 
 if __name__ == "__main__":
     main()

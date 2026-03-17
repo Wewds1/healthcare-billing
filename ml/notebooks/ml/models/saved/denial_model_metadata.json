@@ -1,0 +1,54 @@
+{
+    "model_type": "Logistic Regression",
+    "training_date": "2026-03-17 13:57:10",
+    "dataset_size": 20000,
+    "train_size": 16000,
+    "test_size": 4000,
+    "numeric_features": 45,
+    "metrics": {
+        "accuracy": 0.69575,
+        "precision": 0.6363636363636364,
+        "recall": 0.46881155613919895,
+        "f1_score": 0.5398865784499055,
+        "roc_auc": 0.7259713858635362
+    },
+    "top_features": [
+        "is_code_mismatch",
+        "prior_denial_rate",
+        "insurance_type_Self-pay",
+        "billed_amount",
+        "is_frequent_claimer",
+        "insurance_type_Private",
+        "is_high_cost_procedure",
+        "procedure_cpt_code_99283",
+        "procedure_cpt_code_99285",
+        "procedure_cpt_code_99214"
+    ],
+    "all_model_results": [
+        {
+            "Model": "Logistic Regression",
+            "Accuracy": 0.69575,
+            "Precision": 0.6363636363636364,
+            "Recall": 0.46881155613919895,
+            "F1": 0.5398865784499055,
+            "ROC-AUC": 0.7259713858635362
+        },
+        {
+            "Model": "Gradient Boosting",
+            "Accuracy": 0.6955,
+            "Precision": 0.63249348392702,
+            "Recall": 0.4780039395929087,
+            "F1": 0.5445026178010471,
+            "ROC-AUC": 0.7233133137405166
+        },
+        {
+            "Model": "Random Forest",
+            "Accuracy": 0.68175,
+            "Precision": 0.5992063492063492,
+            "Recall": 0.49573210768220616,
+            "F1": 0.5425799496945742,
+            "ROC-AUC": 0.7022471478243305
+        }
+    ],
+    "chosen_threshold": 0.4
+}
