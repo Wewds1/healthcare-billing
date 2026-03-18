@@ -1,1 +1,11 @@
 /venv
+*.pkl
+*.csv
+/__pycache__/
+*.json
+
+.env
+
+*.h5          # keras models
+*.pt          # pytorch models
+*.onnx        # exported models
