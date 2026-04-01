@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import user, patient, procedure, billing_record, auth, ml_predict
+from app.routers import user, patient, procedure, billing_record, auth, ml_predict, ocr
 import os
 
 app = FastAPI(
@@ -30,6 +30,7 @@ app.include_router(patient.router)
 app.include_router(procedure.router)
 app.include_router(billing_record.router)
 app.include_router(ml_predict.router)
+app.include_router(ocr.router)
 
 
 @app.get("/")
