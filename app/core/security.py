@@ -1,9 +1,15 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import os
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-import os
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional for lightweight runtimes
+    def load_dotenv():
+        return False
 
 
 load_dotenv()

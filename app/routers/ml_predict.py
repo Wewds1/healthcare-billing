@@ -23,6 +23,12 @@ class PredictionInput(BaseModel):
     days_since_last_claim: int = Field(..., ge=0, description="Days since patient's last claim")
     num_prior_claims: int = Field(..., ge=0, description="Number of prior claims")
     prior_denial_rate: float = Field(..., ge=0, le=1, description="Historical denial rate (0-1)")
+    place_of_service: str = Field(default="Office", description="Claim place of service")
+    claim_type: str = Field(default="Professional", description="Claim type")
+    network_status: str = Field(default="In Network", description="Provider network status")
+    authorization_required: int = Field(default=0, ge=0, le=1, description="Whether prior authorization is required")
+    authorization_on_file: int = Field(default=1, ge=0, le=1, description="Whether authorization is on file")
+    units: int = Field(default=1, ge=1, le=12, description="Number of billed units")
     
     class Config:
         schema_extra = {
@@ -34,7 +40,13 @@ class PredictionInput(BaseModel):
                 "billed_amount": 250.00,
                 "days_since_last_claim": 45,
                 "num_prior_claims": 3,
-                "prior_denial_rate": 0.33
+                "prior_denial_rate": 0.33,
+                "place_of_service": "Office",
+                "claim_type": "Professional",
+                "network_status": "In Network",
+                "authorization_required": 0,
+                "authorization_on_file": 1,
+                "units": 1,
             }
         }
 

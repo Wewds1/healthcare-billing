@@ -13,6 +13,10 @@ def get_patients(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Patient).offset(skip).limit(limit).all()
 
 
+def get_patient_by_email(db: Session, email: str):
+    return db.query(Patient).filter(Patient.email == email).first()
+
+
 def create_patient(db: Session, patient: PatientCreate):
     # Create new Patient
     db_patient = Patient(**patient.model_dump())

@@ -1,313 +1,207 @@
+import random
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
+from app.crud import billing_record, patient, procedure, user
 from app.database import SessionLocal
-from app.crud import user, patient, procedure, billing_record
-from app.schemas.user import UserCreate
+from app.schemas.billing_record import BillingRecordCreate
 from app.schemas.patient import PatientCreate
 from app.schemas.procedure import ProcedureCreate
-from app.schemas.billing_record import BillingRecordCreate
+from app.schemas.user import UserCreate
+
+RNG = random.Random(42)
+
+PROCEDURES = [
+    {"cpt_code": "99213", "description": "Office Visit - Established Patient (15 min)", "price": 145},
+    {"cpt_code": "99214", "description": "Office Visit - Established Patient (25 min)", "price": 195},
+    {"cpt_code": "99215", "description": "Office Visit - Established Patient (40 min)", "price": 295},
+    {"cpt_code": "99282", "description": "Emergency Department Visit - Low Severity", "price": 285},
+    {"cpt_code": "99283", "description": "Emergency Department Visit - Moderate Severity", "price": 465},
+    {"cpt_code": "36415", "description": "Venipuncture", "price": 28},
+    {"cpt_code": "80053", "description": "Comprehensive Metabolic Panel", "price": 84},
+    {"cpt_code": "80061", "description": "Lipid Panel", "price": 78},
+    {"cpt_code": "82947", "description": "Glucose Test", "price": 32},
+    {"cpt_code": "85025", "description": "Complete Blood Count", "price": 49},
+    {"cpt_code": "87070", "description": "Culture, Bacterial", "price": 112},
+    {"cpt_code": "93000", "description": "Electrocardiogram", "price": 118},
+    {"cpt_code": "70450", "description": "CT Head without Contrast", "price": 645},
+    {"cpt_code": "71020", "description": "Chest X-ray", "price": 158},
+    {"cpt_code": "73610", "description": "Ankle X-ray", "price": 141},
+    {"cpt_code": "96372", "description": "Therapeutic Injection", "price": 52},
+    {"cpt_code": "97110", "description": "Physical Therapy - Therapeutic Exercise", "price": 108},
+    {"cpt_code": "97140", "description": "Manual Therapy", "price": 96},
+]
+
+PATIENT_TEMPLATES = [
+    ("John", "Doe", "1980-05-15", "Blue Cross Blue Shield", "Private"),
+    ("Jane", "Smith", "1992-08-22", "Aetna", "Private"),
+    ("Michael", "Johnson", "1975-12-03", "UnitedHealthcare", "Private"),
+    ("Emily", "Williams", "1988-03-17", "Cigna", "Private"),
+    ("Robert", "Brown", "1965-11-28", "Medicare Part A", "Medicare"),
+    ("Maria", "Garcia", "1995-07-10", "State Medicaid", "Medicaid"),
+    ("David", "Martinez", "1982-02-28", "Self-Pay", "Self-pay"),
+    ("Sophia", "Anderson", "1971-01-19", "Humana Medicare Advantage", "Medicare"),
+    ("James", "Taylor", "1986-09-09", "Kaiser Permanente", "Private"),
+    ("Olivia", "Thomas", "1998-04-01", "State Medicaid", "Medicaid"),
+    ("Daniel", "Moore", "1960-06-12", "Medicare Part B", "Medicare"),
+    ("Ava", "Jackson", "1990-12-14", "Blue Shield PPO", "Private"),
+]
+
+DIAGNOSIS_TO_CPTS = {
+    "J06.9": ["99213", "99214", "36415", "87070"],
+    "E11.9": ["99213", "99214", "82947", "80053"],
+    "I10": ["99213", "99214", "93000", "80053"],
+    "M79.3": ["99213", "99214", "97110", "97140", "96372"],
+    "R51": ["99213", "99214", "70450"],
+    "J44.9": ["99214", "99215", "71020", "93000"],
+    "E78.5": ["99213", "80061"],
+    "M25.5": ["99213", "73610", "97110", "97140"],
+    "J02.9": ["99213", "87070"],
+    "Z00.00": ["99213", "99214", "85025", "80053"],
+}
+
+INSURANCE_STATUS_WEIGHTS = {
+    "Private": ["paid", "paid", "paid", "pending", "denied"],
+    "Medicare": ["paid", "paid", "pending", "paid", "denied"],
+    "Medicaid": ["paid", "pending", "pending", "denied", "denied"],
+    "Self-pay": ["pending", "denied", "denied", "paid", "pending"],
+}
+
+
+def ensure_users(db):
+    payloads = [
+        {"username": "admin", "email": "admin@hospital.com", "role": "admin", "password": "adminadmin"},
+        {"username": "doctor1", "email": "doctor1@hospital.com", "role": "user", "password": "Doctor123!"},
+        {"username": "billing_staff", "email": "billing@hospital.com", "role": "user", "password": "Staff123!"},
+    ]
+
+    created = []
+    for payload in payloads:
+        existing = user.get_user_by_username(db, payload["username"])
+        if existing:
+            created.append(existing)
+            print(f"   user exists: {existing.username}")
+            continue
+        created.append(user.create_user(db, UserCreate(**payload)))
+        print(f"   created user: {payload['username']}")
+    return created
+
+
+def ensure_procedures(db):
+    created = []
+    for payload in PROCEDURES:
+        existing = procedure.get_procedure_by_cpt_code(db, payload["cpt_code"])
+        if existing:
+            created.append(existing)
+            continue
+        created.append(procedure.create_procedure(db, ProcedureCreate(**payload)))
+    print(f"   procedures available: {len(created)}")
+    return {item.cpt_code: item for item in created}
+
+
+def ensure_patients(db):
+    created = []
+    for index, (first_name, last_name, dob, provider, insurance_type) in enumerate(PATIENT_TEMPLATES, start=1):
+        email = f"{first_name.lower()}.{last_name.lower()}@examplehealth.org"
+        payload = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "date_of_birth": dob,
+            "insurance_provider": provider,
+            "insurance_type": insurance_type,
+            "email": email,
+            "phone": f"555-01{index:02d}",
+        }
+        existing = patient.get_patient_by_email(db, email=email)
+        if existing:
+            created.append(existing)
+            continue
+        created.append(patient.create_patient(db, PatientCreate(**payload)))
+    print(f"   patients available: {len(created)}")
+    return created
+
+
+def build_billing_payloads(patients, procedures_by_cpt):
+    diagnosis_codes = list(DIAGNOSIS_TO_CPTS.keys())
+    records = []
+
+    for patient_row in patients:
+        preferred_statuses = INSURANCE_STATUS_WEIGHTS.get(patient_row.insurance_type, ["paid", "pending", "denied"])
+        claim_count = 6 if patient_row.insurance_type in {"Medicaid", "Self-pay"} else 5
+
+        for _ in range(claim_count):
+            diagnosis_code = RNG.choice(diagnosis_codes)
+            cpt_code = RNG.choice(DIAGNOSIS_TO_CPTS[diagnosis_code])
+            procedure_row = procedures_by_cpt[cpt_code]
+            amount = round(procedure_row.price * RNG.uniform(0.95, 1.18), 2)
+            status = RNG.choice(preferred_statuses)
+
+            if patient_row.insurance_type == "Self-pay" and amount > 250:
+                status = RNG.choice(["pending", "denied", "denied"])
+            elif patient_row.insurance_type == "Medicare" and cpt_code in {"99213", "80053", "80061"}:
+                status = RNG.choice(["paid", "paid", "pending"])
+
+            records.append(
+                BillingRecordCreate(
+                    patient_id=patient_row.id,
+                    procedure_id=procedure_row.id,
+                    amount=amount,
+                    status=status,
+                    diagnosis_code=diagnosis_code,
+                )
+            )
+
+    return records
+
+
+def ensure_billing_records(db, patients, procedures_by_cpt):
+    existing = billing_record.get_billing_records(db, skip=0, limit=1)
+    if existing:
+        total_existing = len(billing_record.get_billing_records(db, skip=0, limit=10000))
+        print(f"   billing records already present: {total_existing}")
+        return total_existing
+
+    payloads = build_billing_payloads(patients, procedures_by_cpt)
+    for payload in payloads:
+        billing_record.create_billing_record(db, payload)
+    print(f"   created billing records: {len(payloads)}")
+    return len(payloads)
 
 
 def seed_database():
     db = SessionLocal()
-    
     try:
         print("=" * 60)
-        print("Starting Database Seeding...")
+        print("Starting database seeding")
         print("=" * 60)
 
-        # ==================== USERS ====================
-        print("\n[1/4] Creating Users...")
-        users_data = [
-            {
-                'username': 'admin', 
-                "email": "admin@hospital.com",
-                "role": "admin",
-                "password": "adminadmin"
-            },  
-            {
-                "username": "doctor1", 
-                "email": "doctor1@hospital.com", 
-                "role": "user",
-                "password": "Doctor123!"
-            },
-            {
-                "username": "billing_staff",
-                "email": "billing@hospital.com", 
-                "role": "user", 
-                "password": "Staff123!"
-            },
-        ]
+        print("\n[1/4] Users")
+        created_users = ensure_users(db)
 
-        created_users = []
-        for user_data in users_data:
-            existing = user.get_user_by_username(db, user_data["username"])
-            if not existing:
-                created_user = user.create_user(db, UserCreate(**user_data))
-                created_users.append(created_user)
-                print(f"   ✅ Created user: {created_user.username} ({created_user.role})")
-            else:
-                created_users.append(existing)
-                print(f"   ⚠️  User already exists: {existing.username}")
+        print("\n[2/4] Procedures")
+        procedures_by_cpt = ensure_procedures(db)
 
-        # ==================== PROCEDURES ====================
-        print("\n[2/4] Creating Procedures...")
-        procedures_data = [
-            {"cpt_code": "99213", "description": "Office Visit - Established Patient (15 min)", "price": 150},
-            {"cpt_code": "99214", "description": "Office Visit - Established Patient (25 min)", "price": 200},
-            {"cpt_code": "99215", "description": "Office Visit - Established Patient (40 min)", "price": 300},
-            {"cpt_code": "80053", "description": "Comprehensive Metabolic Panel", "price": 75},
-            {"cpt_code": "85025", "description": "Complete Blood Count (CBC)", "price": 45},
-            {"cpt_code": "93000", "description": "Electrocardiogram (EKG)", "price": 125},
-            {"cpt_code": "70450", "description": "CT Head without Contrast", "price": 650},
-            {"cpt_code": "71020", "description": "Chest X-ray", "price": 150},
-            {"cpt_code": "97110", "description": "Physical Therapy - Therapeutic Exercise", "price": 100},
-            {"cpt_code": "96372", "description": "Therapeutic Injection", "price": 45},
-        ]
+        print("\n[3/4] Patients")
+        created_patients = ensure_patients(db)
 
-        created_procedures = []
-        for procedure_data in procedures_data:
-            existing = procedure.get_procedure_by_cpt_code(db, procedure_data["cpt_code"])
-            if not existing:
-                created_procedure = procedure.create_procedure(db, ProcedureCreate(**procedure_data))
-                created_procedures.append(created_procedure)
-                print(f"   ✅ Created procedure: {created_procedure.cpt_code} - {created_procedure.description}")
-            else:
-                created_procedures.append(existing)
-                print(f"   ⚠️  Procedure already exists: {existing.cpt_code}")
+        print("\n[4/4] Billing records")
+        billing_count = ensure_billing_records(db, created_patients, procedures_by_cpt)
 
-        # ==================== PATIENTS ====================
-        print("\n[3/4] Creating Patients...")
-        patients_data = [
-            {
-                "first_name": "John",
-                "last_name": "Doe",
-                "date_of_birth": "1980-05-15",
-                "insurance_provider": "Blue Cross Blue Shield",
-                "insurance_type": "Private",
-                "email": "john.doe@email.com",
-                "phone": "555-0101"
-            },
-            {
-                "first_name": "Jane",
-                "last_name": "Smith",
-                "date_of_birth": "1992-08-22",
-                "insurance_provider": "Aetna",
-                "insurance_type": "Private",
-                "email": "jane.smith@email.com",
-                "phone": "555-0102"
-            },
-            {
-                "first_name": "Michael",
-                "last_name": "Johnson",
-                "date_of_birth": "1975-12-03",
-                "insurance_provider": "UnitedHealthcare",
-                "insurance_type": "Private",
-                "email": "michael.johnson@email.com",
-                "phone": "555-0103"
-            },
-            {
-                "first_name": "Emily",
-                "last_name": "Williams",
-                "date_of_birth": "1988-03-17",
-                "insurance_provider": "Cigna",
-                "insurance_type": "Private",
-                "email": "emily.williams@email.com",
-                "phone": "555-0104"
-            },
-            {
-                "first_name": "Robert",
-                "last_name": "Brown",
-                "date_of_birth": "1965-11-28",
-                "insurance_provider": "Medicare Part A",
-                "insurance_type": "Medicare",
-                "email": "robert.brown@email.com",
-                "phone": "555-0105"
-            },
-            {
-                "first_name": "Maria",
-                "last_name": "Garcia",
-                "date_of_birth": "1995-07-10",
-                "insurance_provider": "State Medicaid",
-                "insurance_type": "Medicaid",
-                "email": "maria.garcia@email.com",
-                "phone": "555-0106"
-            },
-            {
-                "first_name": "David",
-                "last_name": "Martinez",
-                "date_of_birth": "1982-02-28",
-                "insurance_provider": "Self-Pay",
-                "insurance_type": "Self-pay",
-                "email": "david.martinez@email.com",
-                "phone": "555-0107"
-            },
-        ]
-
-        created_patients = []
-        for patient_data in patients_data:
-            # Check if patient already exists by email
-            existing_by_email = patient.get_patient(db, patient_id=1) if created_patients else None
-            
-            created_patient = patient.create_patient(db, PatientCreate(**patient_data))
-            created_patients.append(created_patient)
-            print(f"   ✅ Created patient: {created_patient.first_name} {created_patient.last_name} ({created_patient.insurance_type})")
-
-        # ==================== BILLING RECORDS ====================
-        print("\n[4/4] Creating Billing Records...")
-        billing_data = [
-            # John Doe - Private Insurance
-            {
-                "patient_id": created_patients[0].id,
-                "procedure_id": created_procedures[0].id,  # Office visit
-                "amount": 150.00,
-                "status": "paid",
-                "diagnosis_code": "J06.9"  # Upper respiratory infection
-            },
-            {
-                "patient_id": created_patients[0].id,
-                "procedure_id": created_procedures[3].id,  # Metabolic panel
-                "amount": 75.00,
-                "status": "paid",
-                "diagnosis_code": "E11.9"  # Type 2 diabetes
-            },
-            
-            # Jane Smith - Private Insurance
-            {
-                "patient_id": created_patients[1].id,
-                "procedure_id": created_procedures[1].id,  # Office visit 25min
-                "amount": 200.00,
-                "status": "pending",
-                "diagnosis_code": "I10"  # Hypertension
-            },
-            {
-                "patient_id": created_patients[1].id,
-                "procedure_id": created_procedures[5].id,  # EKG
-                "amount": 125.00,
-                "status": "paid",
-                "diagnosis_code": "I10"  # Hypertension
-            },
-            
-            # Michael Johnson - Private Insurance
-            {
-                "patient_id": created_patients[2].id,
-                "procedure_id": created_procedures[4].id,  # CBC
-                "amount": 45.00,
-                "status": "paid",
-                "diagnosis_code": "R51"  # Headache
-            },
-            {
-                "patient_id": created_patients[2].id,
-                "procedure_id": created_procedures[6].id,  # CT Head
-                "amount": 650.00,
-                "status": "denied",
-                "diagnosis_code": "R51"  # Headache (high cost denial)
-            },
-            
-            # Emily Williams - Private Insurance
-            {
-                "patient_id": created_patients[3].id,
-                "procedure_id": created_procedures[0].id,  # Office visit
-                "amount": 150.00,
-                "status": "pending",
-                "diagnosis_code": "M79.3"  # Chronic pain
-            },
-            {
-                "patient_id": created_patients[3].id,
-                "procedure_id": created_procedures[8].id,  # Physical therapy
-                "amount": 100.00,
-                "status": "paid",
-                "diagnosis_code": "M79.3"  # Chronic pain
-            },
-            
-            # Robert Brown - Medicare
-            {
-                "patient_id": created_patients[4].id,
-                "procedure_id": created_procedures[1].id,  # Office visit
-                "amount": 200.00,
-                "status": "paid",
-                "diagnosis_code": "E78.5"  # Hyperlipidemia
-            },
-            {
-                "patient_id": created_patients[4].id,
-                "procedure_id": created_procedures[3].id,  # Metabolic panel
-                "amount": 75.00,
-                "status": "paid",
-                "diagnosis_code": "E78.5"  # Hyperlipidemia
-            },
-            
-            # Maria Garcia - Medicaid
-            {
-                "patient_id": created_patients[5].id,
-                "procedure_id": created_procedures[0].id,  # Office visit
-                "amount": 150.00,
-                "status": "denied",  # Medicaid denial
-                "diagnosis_code": "J02.9"  # Pharyngitis
-            },
-            {
-                "patient_id": created_patients[5].id,
-                "procedure_id": created_procedures[7].id,  # Chest X-ray
-                "amount": 150.00,
-                "status": "pending",
-                "diagnosis_code": "J44.9"  # COPD
-            },
-            
-            # David Martinez - Self-pay
-            {
-                "patient_id": created_patients[6].id,
-                "procedure_id": created_procedures[0].id,  # Office visit
-                "amount": 150.00,
-                "status": "denied",  # Self-pay high denial
-                "diagnosis_code": "Z00.00"  # General exam
-            },
-            {
-                "patient_id": created_patients[6].id,
-                "procedure_id": created_procedures[9].id,  # Injection
-                "amount": 45.00,
-                "status": "pending",
-                "diagnosis_code": "M25.5"  # Joint pain
-            },
-        ]
-
-        created_billing_records = []
-        for bill_data in billing_data:
-            created_bill = billing_record.create_billing_record(db, BillingRecordCreate(**bill_data))
-            created_billing_records.append(created_bill)
-            print(f"   ✅ Created billing record #{created_bill.id}: ${created_bill.amount:.2f} ({created_bill.status}) - {bill_data['diagnosis_code']}")
-
-        # ==================== SUMMARY ====================
         print("\n" + "=" * 60)
-        print("✅ Database Seeding Complete!")
+        print("Database seeding complete")
         print("=" * 60)
-        print(f"   Users:           {len(created_users)}")
-        print(f"   Procedures:      {len(created_procedures)}")
-        print(f"   Patients:        {len(created_patients)}")
-        print(f"   Billing Records: {len(created_billing_records)}")
-        
-        # Calculate some stats
-        paid_count = sum(1 for b in billing_data if b['status'] == 'paid')
-        denied_count = sum(1 for b in billing_data if b['status'] == 'denied')
-        pending_count = sum(1 for b in billing_data if b['status'] == 'pending')
-        total_billed = sum(b['amount'] for b in billing_data)
-        
-        print(f"\n   Status Breakdown:")
-        print(f"      Paid:    {paid_count}")
-        print(f"      Denied:  {denied_count}")
-        print(f"      Pending: {pending_count}")
-        print(f"   Total Billed: ${total_billed:.2f}")
+        print(f"   users: {len(created_users)}")
+        print(f"   procedures: {len(procedures_by_cpt)}")
+        print(f"   patients: {len(created_patients)}")
+        print(f"   billing records: {billing_count}")
         print("=" * 60)
 
-    except Exception as e:
-        print(f"\n❌ Error during database seeding: {e}")
-        print(f"   Error type: {type(e).__name__}")
-        import traceback
-        traceback.print_exc()
+    except Exception as exc:
         db.rollback()
+        print(f"Seeding failed: {exc}")
         raise
-        
     finally:
         db.close()
 

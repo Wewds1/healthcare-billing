@@ -1,113 +1,91 @@
-# Healthcare Billing System
+# Helix Healthcare Billing
 
-A comprehensive **FastAPI-based backend system** for managing healthcare billing operations, including patient records, medical procedures, billing records, and user management.
+Helix is a healthcare billing demo built for portfolio presentation and technical review. It combines a FastAPI backend, a Streamlit operations workspace, OCR-assisted intake hooks, and a denial-risk model trained on a richer synthetic claims dataset.
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
-![Docker](https://img.shields.io/badge/Docker-Enabled-blue)
+## What changed
 
----
+- Local startup is no longer blocked by the Docker-only `db` hostname. Outside Docker, the app falls back to a local SQLite database.
+- The API now creates tables on startup, reports real database and ML health, and fixes broken procedure update behavior.
+- Billing anomaly checks use real patient and prior-claim context instead of hard-coded placeholder values.
+- The seeded dataset is larger and idempotent, so rerunning the seed script does not spam duplicate records.
+- The denial model now trains on `120,000` synthetic claims with stronger claim context:
+  - place of service
+  - claim type
+  - network status
+  - authorization coverage
+  - billed units
+- The Streamlit UI was rebuilt into a more deliberate product surface for demos and portfolio screenshots.
 
-## Features
+## Stack
 
--    **RESTful API** with full CRUD operations
--    **JWT Authentication** with role-based access control
--    **PostgreSQL Database** with Alembic migrations
--    **Docker containerization** for easy deployment
--    **Interactive API Documentation** (Swagger & ReDoc)
--    **Pydantic validation** for data integrity
--    **Password hashing** with bcrypt
--    **Foreign key relationships** between entities
+- FastAPI
+- SQLAlchemy
+- Streamlit
+- scikit-learn
+- PostgreSQL or SQLite
+- OCR pipeline hooks for document ingestion
 
----
+## Quick start
 
-## Table of Contents
+### Local demo mode
 
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [API Endpoints](#-api-endpoints)
-- [Authentication](#-authentication)
-- [Testing](#-testing)
-- [Dashboard](#-dashboard)
-- [Deployment](#-deployment)
+1. Install dependencies from `requirements.txt`.
+2. Start the API:
 
----
+```bash
+uvicorn app.main:app --reload
+```
 
-## Tech Stack
+3. Seed demo data:
 
-- **Backend Framework:** FastAPI
-- **Database:** PostgreSQL 15
-- **ORM:** SQLAlchemy
-- **Migration Tool:** Alembic
-- **Authentication:** JWT (python-jose)
-- **Password Hashing:** Passlib with bcrypt
-- **Containerization:** Docker & Docker Compose
-- **Validation:** Pydantic
-- **Dashboard:** Streamlit
+```bash
+python app/scripts/seed_data.py
+```
 
----
+4. Start the Streamlit workspace:
 
-## Project Structure
+```bash
+streamlit run dashboard.py
+```
 
-healthcare-billing/
-│
-├── app/
-│ ├── init.py
-│ ├── main.py # FastAPI application entry point
-│ ├── database.py # Database configuration
-│ │
-│ ├── core/
-│ │ ├── dependencies.py # Dependency injection
-│ │ ├── security.py # JWT & password utilities
-│ │ └── auth.py # Authentication middleware
-│ │
-│ ├── models/ # SQLAlchemy ORM models
-│ │ ├── user.py
-│ │ ├── patient.py
-│ │ ├── procedure.py
-│ │ └── billing_record.py
-│ │
-│ ├── schemas/ # Pydantic schemas
-│ │ ├── user.py
-│ │ ├── patient.py
-│ │ ├── procedure.py
-│ │ └── billing_record.py
-│ │
-│ ├── crud/ # Database operations
-│ │ ├── user.py
-│ │ ├── patient.py
-│ │ ├── procedure.py
-│ │ └── billing_record.py
-│ │
-│ ├── routers/ # API endpoints
-│ │ ├── auth.py # Authentication routes
-│ │ ├── user.py
-│ │ ├── patient.py
-│ │ ├── procedure.py
-│ │ └── billing_record.py
-│ │
-│ └── scripts/
-│ └── seed_data.py # Database seeding script
-│
-├── alembic/ # Database migrations
-├── dashboard.py # Streamlit dashboard
-├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt
-├── .env
-└── README.md
+If `DATABASE_URL` points at the Docker service host `db`, the app automatically falls back to `sqlite:///./healthcare_billing.db` for a normal local run.
 
+### Docker mode
 
-### Prerequisites
+```bash
+docker compose up --build
+```
 
-- Docker & Docker Compose
-- Git
+## Demo credentials
 
-### Installation
+- `admin / adminadmin`
+- `doctor1 / Doctor123!`
+- `billing_staff / Staff123!`
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/healthcare-billing.git
-   cd healthcare-billing
+## ML model snapshot
+
+Current denial model artifact:
+
+- model: `Gradient Boosting`
+- training rows: `120,000`
+- encoded features: `53`
+- ROC-AUC: `0.7905`
+
+This is still synthetic-data modeling, so it is useful for demo realism and system design review, not for claiming real production clinical or financial performance.
+
+## Portfolio framing
+
+This project now presents cleanly as:
+
+- a healthcare revenue-cycle operations dashboard
+- a denial-risk triage workflow
+- an OCR-to-claim ingestion prototype
+- a full-stack demo with API, data, ML, and UI layers
+
+## Main paths
+
+- API entry: [app/main.py](/D:/healthcare-billing/app/main.py)
+- dashboard: [dashboard.py](/D:/healthcare-billing/dashboard.py)
+- denial model training: [ml/models/train_model_denial.py](/D:/healthcare-billing/ml/models/train_model_denial.py)
+- synthetic data generation: [ml/data/generate_synthetic.py](/D:/healthcare-billing/ml/data/generate_synthetic.py)
+- seed script: [app/scripts/seed_data.py](/D:/healthcare-billing/app/scripts/seed_data.py)

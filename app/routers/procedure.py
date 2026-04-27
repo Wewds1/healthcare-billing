@@ -5,7 +5,7 @@ from typing import List
 from app.core.dependencies import get_db
 from app.schemas.procedure import Procedure, ProcedureCreate, ProcedureUpdate
 from app.crud import procedure as crud
-from app.core.rbac import require_admin, require_user, get_current_user
+from app.core.rbac import require_admin, require_user
 
 
 
@@ -47,7 +47,13 @@ def update_procedure(procedure_id: int, procedure: ProcedureUpdate, db: Session 
     db_procedure = crud.get_procedure(db, procedure_id=procedure_id)
     if db_procedure is None:
         raise HTTPException(status_code=404, detail="Procedure not found")
-    return db_procedure 
+
+    if procedure.cpt_code and procedure.cpt_code != db_procedure.cpt_code:
+        existing = crud.get_procedure_by_cpt_code(db, cpt_code=procedure.cpt_code)
+        if existing and existing.id != procedure_id:
+            raise HTTPException(status_code=400, detail="Procedure with this CPT code already exists")
+
+    return crud.update_procedure(db, procedure_id=procedure_id, procedure=procedure)
 
 # delete a procedure
 @router.delete("/{procedure_id}", response_model=Procedure)

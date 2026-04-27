@@ -1,13 +1,25 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base
-from app.routers import user, patient, procedure, billing_record, auth, ml_predict, ocr
 import os
+from sqlalchemy import text
+
+from app import models  # noqa: F401 - registers SQLAlchemy models
+from app.database import Base, engine
+from app.routers import auth, billing_record, ml_predict, ocr, patient, procedure, user
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
 
 app = FastAPI(
     title="Healthcare Billing System",
     description="Backend API for managing patients, procedures, and billing records",
-    version="1.0.1"
+    version="1.1.0",
+    lifespan=lifespan,
 )
 
 # Environment-based CORS (more secure)
@@ -37,12 +49,40 @@ app.include_router(ocr.router)
 def read_root():
     return {
         "message": "Healthcare Billing API is running",
-        "version": "1.0.1",
+        "version": "1.1.0",
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
     }
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "database": "connected", "ml_enabled": True}
+    db_status = "connected"
+    ml_status = {"denial_model_loaded": False, "anomaly_model_loaded": False}
+    errors = []
+
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception as exc:
+        db_status = "unavailable"
+        errors.append(f"database: {exc}")
+
+    try:
+        from ml.inference.anomaly_detector import get_anomaly_detector
+        from ml.inference.denial_predictor import get_predictor
+
+        get_predictor()
+        get_anomaly_detector()
+        ml_status = {"denial_model_loaded": True, "anomaly_model_loaded": True}
+    except Exception as exc:
+        errors.append(f"ml: {exc}")
+
+    overall = "healthy" if db_status == "connected" and not errors else "degraded"
+    return {
+        "status": overall,
+        "database": db_status,
+        "ml": ml_status,
+        "version": "1.1.0",
+        "errors": errors,
+    }
